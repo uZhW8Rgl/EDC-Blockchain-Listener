@@ -1,0 +1,35 @@
+{
+  "name": "tezos-client",
+  "version": "1.0.0",
+  "description": "Tezos Client API for GAIA X Project",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "serve": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@taquito/taquito": "^13.0.1",
+    "@taquito/tzip16": "^14.0.0",
+    "@taquito/utils": "^14.0.0",
+    "axios": "^1.0.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.1",
+    "node-fetch": "^3.2.4",
+    "nodemon": "^2.0.16",
+    "swagger-jsdoc": "^6.2.1",
+    "swagger-ui-express": "^4.4.0"
+  },
+  "devDependencies": {
+    "@taqueria/plugin-metadata": "^0.20.2",
+    "@taqueria/plugin-smartpy": "^0.20.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uZhW8Rgl/EDC-Blockchain-Listener.git"
+  },
+  "keywords": [],
+  "homepage": "https://github.com/uZhW8Rgl/EDC-Blockchain-Listener#readme"
+}
