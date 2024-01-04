@@ -11,8 +11,7 @@ tezos.setProvider({
   
 try {
   const sub = tezos.stream.subscribeOperation({
-    destination: 'KT18pdEE9Jq4uWvBigLSefhwupB9TLuaM87K'
-    //destination: contractConfig.contractAddress
+    destination: contractConfig.contractAddress
   });
    
   sub.on('data', function(data) {

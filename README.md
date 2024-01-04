@@ -1,20 +1,8 @@
 # EDC-Blockchain-Listener
 
-## IPFS Setup
+## Listener Setup
 
-In order to pin content to the IPFS you must include your Pinata API credentials in the form of environment parameters:
-
-1. Create a file in root directory called ".env"
-2. Add your [Pinata key](https://knowledge.pinata.cloud/en/articles/6191471-how-to-create-an-pinata-api-key) as a variable (the JWT key):
-   ```
-   PINATA_KEY="<JWT key>"
-   ```
-3. Optionally: Add your own smart contract addresses as env variables
-   - ASSET_ADDRESS
-   - POLICY_ADDRESS
-   - CONTRACT_ADDRESS
-   - TRANSFER_ADDRESS
-   - AGREEMENT_ADDRESS
+Ensure that [./contractConfig.js](./contractConfig.js) has the actual addresses and that the right address is in the destination of the [./taquito/listener.js](./taquito/listener.js).
 
 ## Run the Tezos Client
 
@@ -29,10 +17,6 @@ Run the server locally:
 ```
 npm run serve
 ```
-
-## Swagger Documentation
-
-The documentation can be viewed on http://localhost:3001/docs when server runs.
 
 
 ## Tezos Account
