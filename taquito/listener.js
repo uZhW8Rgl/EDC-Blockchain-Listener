@@ -6,24 +6,26 @@ const tezos = new TezosToolkit(contractConfig.rpcUrl);
 
 // monitor contract definitions for entrypoint calls to mint
 tezos.setProvider({ 
-    config: { shouldObservableSubscriptionRetry: true, streamerPollingIntervalMilliseconds: 1500 } 
+  config: { shouldObservableSubscriptionRetry: true, streamerPollingIntervalMilliseconds: 1500 } 
+});
+  
+try {
+  const sub = tezos.stream.subscribeOperation({
+    destination: 'KT18pdEE9Jq4uWvBigLSefhwupB9TLuaM87K'
+    //destination: contractConfig.contractAddress
+  });
+   
+  sub.on('data', function(data) {
+    if(data?.parameters?.entrypoint === 'mint') {
+      myFunction();
+
+    }
   });
   
-  try {
-    const sub = tezos.stream.subscribeOperation({
-      destination: 'KT18pdEE9Jq4uWvBigLSefhwupB9TLuaM87K'
-    });
-     
-    sub.on('data', function(data) {
-      if(data?.parameters?.entrypoint === 'mint') {
-        myFunction();
-      }
-    });
+} catch (e) {
+  console.log(e);
+};
   
-  } catch (e) {
-    console.log(e);
-  };
-  
-  function myFunction() {
-    console.log('Bingo!');
-  }
+function myFunction() {
+  console.log('Bingo!');
+}

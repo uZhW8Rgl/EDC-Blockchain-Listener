@@ -32,15 +32,10 @@ npm run serve
 
 ## Swagger Documentation
 
-The documentation can be viewed on http://localhost:3000/docs when server runs.
+The documentation can be viewed on http://localhost:3001/docs when server runs.
 
-## Contract Information
-
-Metadata of FA2 contracts is generated with the support of @taqueria/plugin-metadata feature to comply with TZIP-16 standard.
 
 ## Tezos Account
-
-Feel free to use the current tezos account included in [./.taq/config.json](./.taq/config.json) for testing.
 
 You can easily create your own account and change it in the config file.
 
