@@ -2,19 +2,22 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const contractConfig = {
-  rpcUrl: "https://rpc.ghostnet.teztnets.xyz/",
+  rpcUrl: "https://rpc.ghostnet.teztnets.com/",
   adminAddress: process.env.ADMIN_ADDRESS
     ? process.env.ADMIN_ADDRESS
     : "tz1Na21NimuuPXcQdHUk2en2XWYe9McyDDgZ",
   assetAddress: process.env.ASSET_ADDRESS
     ? process.env.ASSET_ADDRESS
-    : "KT1CxCiasxvGijSvfRuNrss9TceNw8eHhd4R",
+    : "KT1N3iJne4jFnQz4tdHBz5q7Cd8Wmd6XtZSH",
   policyAddress: process.env.POLICY_ADDRESS
     ? process.env.POLICY_ADDRESS
-    : "KT1FM3F8EgfM3m2zjV66PPzs8vn5q9ZqpBad",
+    : "KT1J7FvNLo2yQSUm7jcm2wzNHDBhR19Y5dJ9",
   contractAddress: process.env.CONTRACT_ADDRESS
     ? process.env.CONTRACT_ADDRESS
-    : "KT18pdEE9Jq4uWvBigLSefhwupB9TLuaM87K",
+    : "KT1QDheV2TkL3mitzYNKzunWYhSe6MmEPTh5",
+  verifiableCredentialsAddress: process.env.VERIFIABLE_CREDENTIALS_ADDRESS
+    ? process.env.VERIFIABLE_CREDENTIALS_ADDRESS
+    : "KT1XgUq6rzN9q6YMh44TbLffEz3zb54HbY2H",
   transferAddress: process.env.TRANSFER_ADDRESS
     ? process.env.TRANSFER_ADDRESS
     : "KT18pEHAbmtGj9iYQAJNhN2CtzjBGf4zBxKX",
