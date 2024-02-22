@@ -26,5 +26,5 @@ try {
 };
   
 function myFunction() {
-  console.log('Bingo!');
+  console.log('Change on monitored contract detected! Please visit: https://better-call.dev/ghostnet/' + contractConfig.verifiableCredentialsAddress + '/tokens');
 }
