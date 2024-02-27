@@ -14,7 +14,7 @@ const contractConfig = {
     : "KT1J7FvNLo2yQSUm7jcm2wzNHDBhR19Y5dJ9",
   contractAddress: process.env.CONTRACT_ADDRESS
     ? process.env.CONTRACT_ADDRESS
-    : "KT1QDheV2TkL3mitzYNKzunWYhSe6MmEPTh5",
+    : "KT1QzJR59dvx3pHaCgLUoffSTMKqqHZEYTkh",
   verifiableCredentialsAddress: process.env.VERIFIABLE_CREDENTIALS_ADDRESS
     ? process.env.VERIFIABLE_CREDENTIALS_ADDRESS
     : "KT1XgUq6rzN9q6YMh44TbLffEz3zb54HbY2H",
