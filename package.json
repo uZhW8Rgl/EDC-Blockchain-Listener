@@ -4,6 +4,7 @@
   "description": "Tezos Client API for GAIA X Project",
   "type": "module",
   "main": "index.js",
+
   "scripts": {
     "serve": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,10 +16,13 @@
     "@taquito/tzip16": "^14.0.0",
     "@taquito/utils": "^14.0.0",
     "axios": "^1.0.0",
+    "concurrently": "^8.2.2",
     "dotenv": "^16.0.3",
     "express": "^4.18.1",
     "node-fetch": "^3.2.4",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "ws": "^8.16.0"
+
   },
   "devDependencies": {
     "@taqueria/plugin-metadata": "^0.20.2",

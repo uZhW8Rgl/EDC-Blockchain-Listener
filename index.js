@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import "./taquito/listener.js";
+import "./server.js";
 
 // set up express
 const client = express();
