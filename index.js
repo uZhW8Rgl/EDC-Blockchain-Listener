@@ -1,30 +1,28 @@
-import express from "express";
-import dotenv from "dotenv";
 import "./taquito/listener.js";
-import "./server.js";
 
-// set up express
-const client = express();
-client.use(express.json());
-const port = 3001;
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
 
-dotenv.config();
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
-// Swagger Setup
-const swaggerDefinition = {
-  openapi: "3.0.0",
-  info: {
-    title: "Tezos Client for Listening to Contracts",
-    version: "1.0.0",
-    description:
-      "Interface to forward changes to Assets, Policies and Contracts from Eclipse Dataspace Connector to the Federated Catalog.",
-  },
-  servers: [
-    { url: "http://" + "localhost" + ":" + port, description: "Dev Server" },
-  ],
-};
+const port = 3005;
 
-client.listen(port, () => {
-  console.log(`API listening at http://localhost:${port}`);
-  //console.log(`For API Documentation see http://localhost:${port}/docs`);
+
+app.use(express.json());
+
+app.post('/webhook', (req, res) => {
+    console.log('Webhook received:', req.body);
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(req.body));
+        }
+    });
+    res.sendStatus(200);
 });
+
+server.listen(port, () => console.log('Server listening on port ' + port + '.'));
