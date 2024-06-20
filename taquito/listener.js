@@ -19,7 +19,8 @@ tezos.setProvider({
   config: { shouldObservableSubscriptionRetry: true, streamerPollingIntervalMilliseconds: 1500 } 
 });
    
-  
+let tokenIDs = new Set();
+
 try {
   const sub = tezos.stream.subscribeOperation({
     destination: contractConfig.contractAddress
@@ -32,6 +33,10 @@ try {
       console.log(JSON.stringify(data, null, 2));
       const token_int_position = data.metadata.operation_result.lazy_storage_diff[2].diff.updates[0].key.int // get token id
       //console.log(JSON.stringify(tokenint, null, 2));
+      if(tokenIDs.has(token_int_position)) {
+        return; // Wenn ja, ignorieren wir sie
+      }
+      tokenIDs.add(token_int_position);
       console.log(token_int_position);
       
       getToken(contractConfig.contractAddress,token_int_position) // get token metadata
@@ -74,6 +79,7 @@ export const getToken = async (contractAddress, tokenCount) => {
       console.log(JSON.stringify(res, null, 2))
       result.push(res);
       if (res[0] && res[0].metadata && res[0].metadata.tokenData && res[0].metadata.tokenData.verifiablePresentation) {
+        tokenIDs.delete(tokenCount);
         console.log('Metadata found');
         console.log(JSON.stringify(res[0].metadata.tokenData.verifiablePresentation, null, 2))
         forwardToken(res[0].metadata.tokenData.verifiablePresentation); // forward verifiable presentation of token to Federated Catalog server
