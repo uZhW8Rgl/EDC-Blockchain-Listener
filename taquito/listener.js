@@ -1,9 +1,10 @@
-import { TezosToolkit } from "@taquito/taquito";
-import { contractConfig } from "../contractConfig.js";
-import { createRequire } from "module";
+import {TezosToolkit} from "@taquito/taquito";
+import {contractConfig} from "../contractConfig.js";
+import {createRequire} from "module";
+import {access_token} from "../index.js";
+import {Buffer} from "buffer";
+
 const require = createRequire(import.meta.url);
-import { access_token } from "../index.js";
-import { Buffer } from "buffer";
 
 const logLevels = {
   'debug': 1,
@@ -15,7 +16,7 @@ const logLevels = {
 class Console {
   static log(message, level = 'debug') {
     if (logLevels[level] >= logLevels[currentLogLevel]) {
-      console.log(`[${level.toUpperCase()}] ${message}`);
+      console.log(`[${level.toUpperCase()}] [${new Date()}] ${message}`);
     }
   }
 
@@ -67,7 +68,7 @@ try {
         return; // Wenn ja, ignorieren wir sie
       }
       tokenIDs.add(token_int_position);
-      Console.info(token_int_position);
+      Console.info('Token int position: ' + token_int_position);
       
       getToken(contractConfig.contractAddress,token_int_position) // get token metadata
       
@@ -77,17 +78,17 @@ try {
         }
       })
       .then(response => {
-        Console.info('Status:', response.status);
-        Console.info('Body: ', response.data);
+        Console.info('Status: ' + response.status);
+        Console.info('Body: ' + response.data);
       })
       .catch(error => {
-        Console.error('Error:', error);
+        Console.error('Error: ' + error);
       });
     }
   }); 
   
 } catch (e) {
-  Console.error('Error: ', e);
+  Console.error('Error: ' + e);
 }
 
 export const getToken = async (contractAddress, tokenCount) => {
@@ -97,8 +98,8 @@ export const getToken = async (contractAddress, tokenCount) => {
 
   const recursiveCall = async () => {
     recursiveCallsCount++; // Increment counter at the beginning of each call
-    if (recursiveCallsCount > 3) {
-      Console.info('Maximum recursive calls reached.');
+    if (recursiveCallsCount > 60) {
+      Console.warn('Maximum recursive calls reached.');
       return; // Stop recursion if counter is greater than 3
     }    
     
@@ -117,19 +118,21 @@ export const getToken = async (contractAddress, tokenCount) => {
       Console.debug(JSON.stringify(res, null, 2))
       result.push(res);
       if (res[0] && res[0].metadata && res[0].metadata.tokenData && res[0].metadata.tokenData.verifiablePresentation) {
+        Console.info('Metadata for "verifiablePresentation" found. Recursion count: ' + recursiveCallsCount);
         processVerifiablePresentation(res, tokenCount);
       } else if (res[0] && res[0].metadata && res[0].metadata.tokenData && res[0].metadata.tokenData.claimComplianceProviderResponses) {
+        Console.info('Metadata for "claimComplianceProviderResponses" found. Recursion count: ' + recursiveCallsCount);
         processClaimComplianceProviderResponses(res, tokenCount);
       }
       else {
         Console.info('No metadata found');
         setTimeout(() => {
           recursiveCall();
-        }, 1*60*1000);
+        }, 60*1000);
       }
     })
     .catch(function (error) {
-      Console.info(error);
+      Console.error(error);
       throw new Error(error);
     });
   };
@@ -145,7 +148,6 @@ export const getToken = async (contractAddress, tokenCount) => {
 // Moved to top level with necessary parameters
 const processVerifiablePresentation = (res, tokenCount) => {
   tokenIDs.delete(tokenCount);
-  Console.info('Metadata for "verifiablePresentation" found');
   Console.debug(JSON.stringify(res[0].metadata.tokenData.verifiablePresentation, null, 2))
   forwardToken(res[0].metadata.tokenData.verifiablePresentation); // forward verifiable presentation of token to Federated Catalog server
 };
@@ -153,7 +155,6 @@ const processVerifiablePresentation = (res, tokenCount) => {
 // Moved to top level with necessary parameters
 const processClaimComplianceProviderResponses = (res, tokenCount) => {
   tokenIDs.delete(tokenCount);
-  Console.info('Metadata for "claimComplianceProviderResponses" found');
   Console.debug(JSON.stringify(res[0].metadata.tokenData.claimComplianceProviderResponses, null, 2))
 
   const claimComplianceProviderResponses = res[0].metadata.tokenData.claimComplianceProviderResponses;
@@ -172,8 +173,6 @@ const processClaimComplianceProviderResponses = (res, tokenCount) => {
 };
 
 const forwardToken = async (token) => {
-  
-  let data = token;
 
   let config = {
     method: 'post',
@@ -184,16 +183,16 @@ const forwardToken = async (token) => {
       'Content-Type': 'application/json', 
       'Authorization': 'Bearer ' + access_token
     },
-    data : data
+    data : token
   };
 
   axios.request(config)
   .then((response) => {
-    Console.info('Status of FC response:', response.status);
+    Console.info('Status of FC response: ' + response.status);
     Console.debug(JSON.stringify(response.data));
   })
   .catch((error) => {
-    Console.info('Status of FC response:', response.status);
-    Console.info(error);
+    Console.info('Status of FC response: ' + error.status);
+    Console.error(error);
   });
 }
