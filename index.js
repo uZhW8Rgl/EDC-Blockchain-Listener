@@ -62,10 +62,7 @@ axios.request(config)
 .then((response) => {
     access_token = response.data.access_token;
     refresh_token = response.data.refresh_token;
-    //console.log(JSON.stringify(response.data, null, 2));
     console.log(access_token);
-    //console.log(refresh_token);
-    //getToken(contractConfig.contractAddress,token_int_position)
 })
 .catch((error) => {
     console.log(error);

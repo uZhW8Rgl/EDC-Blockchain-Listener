@@ -1,9 +1,43 @@
-import { TezosToolkit } from "@taquito/taquito";
-import { contractConfig } from "../contractConfig.js";
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-import { access_token } from "../index.js";
+import {TezosToolkit} from "@taquito/taquito";
+import {contractConfig} from "../contractConfig.js";
+import {createRequire} from "module";
+import {access_token} from "../index.js";
+import {Buffer} from "buffer";
 
+const require = createRequire(import.meta.url);
+
+const logLevels = {
+  'debug': 1,
+  'info': 2,
+  'warn': 3,
+  'error': 4
+};
+
+class Console {
+  static log(message, level = 'debug') {
+    if (logLevels[level] >= logLevels[currentLogLevel]) {
+      console.log(`[${level.toUpperCase()}] [${new Date()}] ${message}`);
+    }
+  }
+
+  static debug(message) {
+    this.log(message, 'debug');
+  }
+
+  static info(message) {
+    this.log(message, 'info');
+  }
+
+  static warn(message) {
+    this.log(message, 'warn');
+  }
+
+  static error(message) {
+    this.log(message, 'error');
+  }
+}
+
+const currentLogLevel = process.env.LOG_LEVEL || 'info';
 
 // connect tezos client to testnet
 const tezos = new TezosToolkit(contractConfig.rpcUrl);
@@ -12,7 +46,6 @@ const tezos = new TezosToolkit(contractConfig.rpcUrl);
 const axios = require('axios');
 //const webhookURL = 'https://webhook.site/a2c92283-f097-4a4a-805e-9371ccd77ef9'
 const webhookURL = 'http://localhost:3005/webhook'
-
 
 // monitor contract definitions for entrypoint calls to mint
 tezos.setProvider({ 
@@ -28,16 +61,14 @@ try {
    
   sub.on('data', function(data) {
     if(data?.parameters?.entrypoint === 'mint') {
-      console.log('Change on monitored contract detected! Please visit: https://better-call.dev/ghostnet/' + contractConfig.contractAddress + '/tokens');
-      console.log(data);
-      console.log(JSON.stringify(data, null, 2));
+      Console.info('Change on monitored contract detected! Please visit: https://better-call.dev/ghostnet/' + contractConfig.contractAddress + '/tokens');
+      Console.debug(JSON.stringify(data, null, 2));
       const token_int_position = data.metadata.operation_result.lazy_storage_diff[2].diff.updates[0].key.int // get token id
-      //console.log(JSON.stringify(tokenint, null, 2));
       if(tokenIDs.has(token_int_position)) {
         return; // Wenn ja, ignorieren wir sie
       }
       tokenIDs.add(token_int_position);
-      console.log(token_int_position);
+      Console.info('Token int position: ' + token_int_position);
       
       getToken(contractConfig.contractAddress,token_int_position) // get token metadata
       
@@ -47,24 +78,31 @@ try {
         }
       })
       .then(response => {
-        console.log('Status:', response.status);
-        console.log('Body: ', response.data);
+        Console.info('Status: ' + response.status);
+        Console.info('Body: ' + response.data);
       })
       .catch(error => {
-        console.error('Error:', error);
+        Console.error('Error: ' + error);
       });
     }
   }); 
   
 } catch (e) {
-  console.log(e);
-};
+  Console.error('Error: ' + e);
+}
 
 export const getToken = async (contractAddress, tokenCount) => {
   let result = [];
   let startTime = new Date().getTime();
+  let recursiveCallsCount = 0; // Initialize counter
 
   const recursiveCall = async () => {
+    recursiveCallsCount++; // Increment counter at the beginning of each call
+    if (recursiveCallsCount > 60) {
+      Console.warn('Maximum recursive calls reached.');
+      return; // Stop recursion if counter is greater than 3
+    }    
+    
     let request = {
       method: "get",
       url: `https://api.ghostnet.tzkt.io/v1/tokens/`,
@@ -73,24 +111,28 @@ export const getToken = async (contractAddress, tokenCount) => {
         tokenId: tokenCount
       },
     };
+
     await axios(request)
     .then((response) => {
       let res = response.data;
-      console.log(JSON.stringify(res, null, 2))
+      Console.debug(JSON.stringify(res, null, 2))
       result.push(res);
       if (res[0] && res[0].metadata && res[0].metadata.tokenData && res[0].metadata.tokenData.verifiablePresentation) {
-        tokenIDs.delete(tokenCount);
-        console.log('Metadata found');
-        console.log(JSON.stringify(res[0].metadata.tokenData.verifiablePresentation, null, 2))
-        forwardToken(res[0].metadata.tokenData.verifiablePresentation); // forward verifiable presentation of token to Federated Catalog server
-      } else {
+        Console.info('Metadata for "verifiablePresentation" found. Recursion count: ' + recursiveCallsCount);
+        processVerifiablePresentation(res, tokenCount);
+      } else if (res[0] && res[0].metadata && res[0].metadata.tokenData && res[0].metadata.tokenData.claimComplianceProviderResponses) {
+        Console.info('Metadata for "claimComplianceProviderResponses" found. Recursion count: ' + recursiveCallsCount);
+        processClaimComplianceProviderResponses(res, tokenCount);
+      }
+      else {
+        Console.info('No metadata found');
         setTimeout(() => {
           recursiveCall();
-        }, 1*60*1000);
+        }, 60*1000);
       }
     })
     .catch(function (error) {
-      console.log(error);
+      Console.error(error);
       throw new Error(error);
     });
   };
@@ -99,13 +141,38 @@ export const getToken = async (contractAddress, tokenCount) => {
 
   let endtime = new Date().getTime();
   let duration = (endtime - startTime) / 1000;
-  console.log(`Execution time: ${duration} seconds`);
-  console.log(`${result.length} tokens were returned`);
+  Console.info(`Execution time: ${duration} seconds`);
+  Console.info(`${result.length} tokens were returned`);
+};
+
+// Moved to top level with necessary parameters
+const processVerifiablePresentation = (res, tokenCount) => {
+  tokenIDs.delete(tokenCount);
+  Console.debug(JSON.stringify(res[0].metadata.tokenData.verifiablePresentation, null, 2))
+  forwardToken(res[0].metadata.tokenData.verifiablePresentation); // forward verifiable presentation of token to Federated Catalog server
+};
+
+// Moved to top level with necessary parameters
+const processClaimComplianceProviderResponses = (res, tokenCount) => {
+  tokenIDs.delete(tokenCount);
+  Console.debug(JSON.stringify(res[0].metadata.tokenData.claimComplianceProviderResponses, null, 2))
+
+  const claimComplianceProviderResponses = res[0].metadata.tokenData.claimComplianceProviderResponses;
+  claimComplianceProviderResponses.forEach(response => {
+    const decodedString = Buffer.from(response, 'base64').toString('utf-8');
+    const jsonArray = JSON.parse(decodedString);
+    jsonArray.forEach(item => {
+      if (item.verifiableCredential[0].verificationMethod.startsWith("did:web:compliance.lab.gaia-x.eu")) {
+        Console.info("Skipping forwardToken due to verificationMethod starts with did:web:compliance.lab.gaia-x.eu.");
+      } else {
+        Console.info("Sending VP to FC server");
+        forwardToken(item);
+      }
+    });
+  });
 };
 
 const forwardToken = async (token) => {
-  
-  let data = token;
 
   let config = {
     method: 'post',
@@ -116,14 +183,16 @@ const forwardToken = async (token) => {
       'Content-Type': 'application/json', 
       'Authorization': 'Bearer ' + access_token
     },
-    data : data
+    data : token
   };
 
   axios.request(config)
   .then((response) => {
-    console.log(JSON.stringify(response.data));
+    Console.info('Status of FC response: ' + response.status);
+    Console.debug(JSON.stringify(response.data));
   })
   .catch((error) => {
-    console.log(error);
+    Console.info('Status of FC response: ' + error.status);
+    Console.error(error);
   });
 }
