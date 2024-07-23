@@ -132,7 +132,7 @@ const processClaimComplianceProviderResponses = (res, tokenCount) => {
     jsonArray.forEach(item => {
       Console.debug("Processing VP from CCP: " + item);
       if (item.verifiableCredential[0]?.issuer?.startsWith("did:web:compliance.lab.gaia-x.eu")) {
-        Console.info("Skipping forwardToken due to issuer starts with did:web:compliance.lab.gaia-x.eu.");
+        Console.info("Skipping VP due to issuer starts with did:web:compliance.lab.gaia-x.eu.");
       } else {
         Console.info("Sending VP to FC server");
         sendToCatalogue(item);

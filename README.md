@@ -13,7 +13,6 @@ The listener observes if the mint function of a smart contract is triggered. If 
 - This json array represents the response from the [Claim Compliance Provider](https://claim-compliance-provider.gxfs.gx4fm.org/docs/)'s `send-claims` endpoint.
 - Each contained Verifiable Presentation which Verifiable Credential is not issued by `did:web:compliance.lab.gaia-x.eu*` is sent to the catalogue as it is.
 
-
 ## Listener Setup
 
 Ensure that [./contractConfig.js](./contractConfig.js) has the actual addresses and that the right address is in the destination of the [./taquito/listener.js](./taquito/listener.js) or if you are using docker look out that the correct environment variable is set.

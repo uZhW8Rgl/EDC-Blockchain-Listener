@@ -23,7 +23,7 @@ const logLevels = {
     'error': 4
 };
 
-class Console {
+export class Console {
     static log(message, level = 'debug') {
         if (logLevels[level] >= logLevels[process.env.LOG_LEVEL || 'info']) {
             console.log(`[${level.toUpperCase()}] [${new Date().toLocaleString()}] ${message}`);
@@ -46,9 +46,6 @@ class Console {
         this.log(message, 'error');
     }
 }
-
-// Export the Console class
-export { Console };
 
 app.use(express.json());
 //app.use(cors());
