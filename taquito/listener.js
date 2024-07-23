@@ -133,7 +133,6 @@ export const getToken = async (contractAddress, tokenCount) => {
     })
     .catch(function (error) {
       Console.error(error);
-      throw new Error(error);
     });
   };
 
@@ -155,14 +154,16 @@ const processVerifiablePresentation = (res, tokenCount) => {
 // Moved to top level with necessary parameters
 const processClaimComplianceProviderResponses = (res, tokenCount) => {
   tokenIDs.delete(tokenCount);
-  Console.debug(JSON.stringify(res[0].metadata.tokenData.claimComplianceProviderResponses, null, 2))
-
   const claimComplianceProviderResponses = res[0].metadata.tokenData.claimComplianceProviderResponses;
+  Console.debug(JSON.stringify(claimComplianceProviderResponses, null, 2))
+
   claimComplianceProviderResponses.forEach(response => {
     const decodedString = Buffer.from(response, 'base64').toString('utf-8');
+    Console.debug("Decoded CCP response: " + decodedString);
     const jsonArray = JSON.parse(decodedString);
     jsonArray.forEach(item => {
-      if (item.verifiableCredential[0].verificationMethod.startsWith("did:web:compliance.lab.gaia-x.eu")) {
+      Console.debug("CCP response item: " + JSON.stringify(item, null, 2));
+      if (item.verifiableCredential[0]?.verificationMethod?.startsWith("did:web:compliance.lab.gaia-x.eu")) {
         Console.info("Skipping forwardToken due to verificationMethod starts with did:web:compliance.lab.gaia-x.eu.");
       } else {
         Console.info("Sending VP to FC server");
