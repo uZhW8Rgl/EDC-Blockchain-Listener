@@ -1,7 +1,7 @@
 // catalogue.js
 import axios from 'axios';
 import qs from 'qs';
-import { Console } from "./index.js";
+import { Console } from "../index.js";
 
 export let access_token = '';
 export let refresh_token = '';

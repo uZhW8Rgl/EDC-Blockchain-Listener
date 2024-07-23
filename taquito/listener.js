@@ -1,7 +1,6 @@
 import {TezosToolkit} from "@taquito/taquito";
 import {contractConfig} from "../contractConfig.js";
 import {createRequire} from "module";
-import {access_token, refreshAccessToken} from "../index.js";
 import {Buffer} from "buffer";
 import { Console } from "../index.js";
 import {sendToCatalogue} from "./catalogue.js";
