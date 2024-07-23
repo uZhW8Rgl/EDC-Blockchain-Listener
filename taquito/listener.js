@@ -16,7 +16,7 @@ const logLevels = {
 class Console {
   static log(message, level = 'debug') {
     if (logLevels[level] >= logLevels[currentLogLevel]) {
-      console.log(`[${level.toUpperCase()}] [${new Date()}] ${message}`);
+      console.log(`[${level.toUpperCase()}] [${new Date().toLocaleString()}] ${message}`);
     }
   }
 
@@ -162,9 +162,9 @@ const processClaimComplianceProviderResponses = (res, tokenCount) => {
     Console.debug("Decoded CCP response: " + decodedString);
     const jsonArray = JSON.parse(decodedString);
     jsonArray.forEach(item => {
-      Console.debug("CCP response item: " + JSON.stringify(item, null, 2));
-      if (item.verifiableCredential[0]?.verificationMethod?.startsWith("did:web:compliance.lab.gaia-x.eu")) {
-        Console.info("Skipping forwardToken due to verificationMethod starts with did:web:compliance.lab.gaia-x.eu.");
+      Console.debug("Processing VP from CCP: " + item);
+      if (item.verifiableCredential[0]?.issuer?.startsWith("did:web:compliance.lab.gaia-x.eu")) {
+        Console.info("Skipping forwardToken due to issuer starts with did:web:compliance.lab.gaia-x.eu.");
       } else {
         Console.info("Sending VP to FC server");
         forwardToken(item);
