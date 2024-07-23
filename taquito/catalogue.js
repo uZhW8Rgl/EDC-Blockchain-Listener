@@ -6,44 +6,6 @@ import { Console } from "../index.js";
 export let access_token = '';
 export let refresh_token = '';
 
-export const refreshAccessToken = async () => {
-    let data;
-    if (refresh_token) {
-        data = qs.stringify({
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token,
-            'client_id': process.env.client_id,
-            'client_secret': process.env.client_secret
-        });
-    } else {
-        data = qs.stringify({
-            'grant_type': 'password',
-            'username': process.env.keycloak_user_username,
-            'password': process.env.keycloak_user_password,
-            'client_id': process.env.client_id,
-            'scope': 'openid',
-            'client_secret': process.env.client_secret
-        });
-    }
-    let config = {
-        method: 'post',
-        url: process.env.keycloak_protocol + '://' + process.env.keycloak_address + '/realms/gaia-x/protocol/openid-connect/token',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        data: data
-    };
-
-    try {
-        const response = await axios.request(config);
-        access_token = response.data.access_token; // Update the global access_token
-        refresh_token = response.data.refresh_token; // Optionally update the refresh_token if it's also refreshed
-        Console.info("Access token refreshed.");
-    } catch (error) {
-        Console.error("Failed to refresh access token: " + error);
-    }
-};
-
 export const sendToCatalogue = async (token) => {
     let attemptRefresh = true;
 
@@ -80,3 +42,37 @@ export const sendToCatalogue = async (token) => {
 
     await sendRequest();
 };
+
+const refreshAccessToken = async () => {
+    let data = qs.stringify({
+            'grant_type': 'password',
+            'username': process.env.keycloak_user_username,
+            'password': process.env.keycloak_user_password,
+            'client_id': process.env.client_id,
+            'scope': 'openid',
+            'client_secret': process.env.client_secret
+        });
+
+    let config = {
+        method: 'post',
+        url: process.env.keycloak_protocol + '://' + process.env.keycloak_address + '/realms/gaia-x/protocol/openid-connect/token',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        data: data
+    };
+
+    try {
+        const response = await axios.request(config);
+        access_token = response.data.access_token; // Update the global access_token
+        refresh_token = response.data.refresh_token; // Optionally update the refresh_token if it's also refreshed
+        Console.info("Access token refreshed.");
+    } catch (error) {
+        Console.error("Failed to refresh access token: " + error);
+    }
+};
+
+// initialize the access token on startup
+(async () => {
+    await refreshAccessToken();
+})();
