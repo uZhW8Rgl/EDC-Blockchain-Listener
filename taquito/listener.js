@@ -1,43 +1,11 @@
 import {TezosToolkit} from "@taquito/taquito";
 import {contractConfig} from "../contractConfig.js";
 import {createRequire} from "module";
-import {access_token} from "../index.js";
+import {access_token, refreshAccessToken} from "../index.js";
 import {Buffer} from "buffer";
+import { Console } from "../index.js";
 
 const require = createRequire(import.meta.url);
-
-const logLevels = {
-  'debug': 1,
-  'info': 2,
-  'warn': 3,
-  'error': 4
-};
-
-class Console {
-  static log(message, level = 'debug') {
-    if (logLevels[level] >= logLevels[currentLogLevel]) {
-      console.log(`[${level.toUpperCase()}] [${new Date().toLocaleString()}] ${message}`);
-    }
-  }
-
-  static debug(message) {
-    this.log(message, 'debug');
-  }
-
-  static info(message) {
-    this.log(message, 'info');
-  }
-
-  static warn(message) {
-    this.log(message, 'warn');
-  }
-
-  static error(message) {
-    this.log(message, 'error');
-  }
-}
-
-const currentLogLevel = process.env.LOG_LEVEL || 'info';
 
 // connect tezos client to testnet
 const tezos = new TezosToolkit(contractConfig.rpcUrl);
@@ -174,26 +142,38 @@ const processClaimComplianceProviderResponses = (res, tokenCount) => {
 };
 
 const forwardToken = async (token) => {
+  let attemptRefresh = true; // Flag to control token refresh attempt
 
-  let config = {
-    method: 'post',
-    maxBodyLength: Infinity,
-    url: 'https://fc-server.gxfs.gx4fm.org/self-descriptions',
-    headers: { 
-      'accept': 'application/json', 
-      'Content-Type': 'application/json', 
-      'Authorization': 'Bearer ' + access_token
-    },
-    data : token
+  const sendRequest = async () => {
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://fc-server.gxfs.gx4fm.org/self-descriptions',
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + access_token
+      },
+      data: token
+    };
+
+    try {
+      const response = await axios.request(config);
+      Console.info('Status of FC response: ' + response.status);
+      Console.debug(JSON.stringify(response.data));
+    } catch (error) {
+      if (error.response && error.response.status === 401 && attemptRefresh) {
+        Console.info('Access token expired. Refreshing token...');
+        await refreshAccessToken(); // Call the refresh function from index.js
+        attemptRefresh = false; // Prevent multiple refresh attempts
+        await sendRequest(); // Retry the request with the new token
+      } else {
+        let statusCode = error.response ? error.response.status : 'No response';
+        Console.info('Status of FC response: ' + statusCode);
+        Console.error(error);
+      }
+    }
   };
 
-  axios.request(config)
-  .then((response) => {
-    Console.info('Status of FC response: ' + response.status);
-    Console.debug(JSON.stringify(response.data));
-  })
-  .catch((error) => {
-    Console.info('Status of FC response: ' + error.status);
-    Console.error(error);
-  });
-}
+  await sendRequest();
+};
