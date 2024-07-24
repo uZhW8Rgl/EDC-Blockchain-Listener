@@ -1,43 +1,11 @@
 import {TezosToolkit} from "@taquito/taquito";
 import {contractConfig} from "../contractConfig.js";
 import {createRequire} from "module";
-import {access_token} from "../index.js";
 import {Buffer} from "buffer";
+import { Console } from "../index.js";
+import {sendToCatalogue} from "./catalogue.js";
 
 const require = createRequire(import.meta.url);
-
-const logLevels = {
-  'debug': 1,
-  'info': 2,
-  'warn': 3,
-  'error': 4
-};
-
-class Console {
-  static log(message, level = 'debug') {
-    if (logLevels[level] >= logLevels[currentLogLevel]) {
-      console.log(`[${level.toUpperCase()}] [${new Date()}] ${message}`);
-    }
-  }
-
-  static debug(message) {
-    this.log(message, 'debug');
-  }
-
-  static info(message) {
-    this.log(message, 'info');
-  }
-
-  static warn(message) {
-    this.log(message, 'warn');
-  }
-
-  static error(message) {
-    this.log(message, 'error');
-  }
-}
-
-const currentLogLevel = process.env.LOG_LEVEL || 'info';
 
 // connect tezos client to testnet
 const tezos = new TezosToolkit(contractConfig.rpcUrl);
@@ -133,7 +101,6 @@ export const getToken = async (contractAddress, tokenCount) => {
     })
     .catch(function (error) {
       Console.error(error);
-      throw new Error(error);
     });
   };
 
@@ -149,50 +116,27 @@ export const getToken = async (contractAddress, tokenCount) => {
 const processVerifiablePresentation = (res, tokenCount) => {
   tokenIDs.delete(tokenCount);
   Console.debug(JSON.stringify(res[0].metadata.tokenData.verifiablePresentation, null, 2))
-  forwardToken(res[0].metadata.tokenData.verifiablePresentation); // forward verifiable presentation of token to Federated Catalog server
+  sendToCatalogue(res[0].metadata.tokenData.verifiablePresentation); // forward verifiable presentation of token to Federated Catalog server
 };
 
 // Moved to top level with necessary parameters
 const processClaimComplianceProviderResponses = (res, tokenCount) => {
   tokenIDs.delete(tokenCount);
-  Console.debug(JSON.stringify(res[0].metadata.tokenData.claimComplianceProviderResponses, null, 2))
-
   const claimComplianceProviderResponses = res[0].metadata.tokenData.claimComplianceProviderResponses;
+  Console.debug(JSON.stringify(claimComplianceProviderResponses, null, 2))
+
   claimComplianceProviderResponses.forEach(response => {
     const decodedString = Buffer.from(response, 'base64').toString('utf-8');
+    Console.debug("Decoded CCP response: " + decodedString);
     const jsonArray = JSON.parse(decodedString);
     jsonArray.forEach(item => {
-      if (item.verifiableCredential[0].verificationMethod.startsWith("did:web:compliance.lab.gaia-x.eu")) {
-        Console.info("Skipping forwardToken due to verificationMethod starts with did:web:compliance.lab.gaia-x.eu.");
+      Console.debug("Processing VP from CCP: " + item);
+      if (item.verifiableCredential[0]?.issuer?.startsWith("did:web:compliance.lab.gaia-x.eu")) {
+        Console.info("Skipping VP due to issuer starts with did:web:compliance.lab.gaia-x.eu.");
       } else {
         Console.info("Sending VP to FC server");
-        forwardToken(item);
+        sendToCatalogue(item);
       }
     });
   });
 };
-
-const forwardToken = async (token) => {
-
-  let config = {
-    method: 'post',
-    maxBodyLength: Infinity,
-    url: 'https://fc-server.gxfs.gx4fm.org/self-descriptions',
-    headers: { 
-      'accept': 'application/json', 
-      'Content-Type': 'application/json', 
-      'Authorization': 'Bearer ' + access_token
-    },
-    data : token
-  };
-
-  axios.request(config)
-  .then((response) => {
-    Console.info('Status of FC response: ' + response.status);
-    Console.debug(JSON.stringify(response.data));
-  })
-  .catch((error) => {
-    Console.info('Status of FC response: ' + error.status);
-    Console.error(error);
-  });
-}
